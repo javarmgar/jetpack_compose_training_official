@@ -1,4 +1,4 @@
-package com.example.ComposeTraining
+package com.example.composetraining
 
 import org.junit.Test
 

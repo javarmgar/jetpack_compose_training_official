@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.sideeffects"
+    namespace = "com.example.composetraining"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.sideeffects"
+        applicationId = "com.example.composetraining"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
