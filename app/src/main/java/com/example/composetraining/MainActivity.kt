@@ -1,7 +1,6 @@
 package com.example.composetraining
 
 import android.os.Bundle
-import android.widget.Space
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -20,10 +19,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.paddingFromBaseline
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -31,7 +28,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -65,7 +61,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun App(modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxWidth()) {
-        HelloComposable()
+        HelloComposableStateFull()
         ArtistCardColumn(modifier = modifier)
         ArtistCardRow(modifier = modifier)
         ArtistCardBox()
@@ -76,10 +72,16 @@ fun App(modifier: Modifier = Modifier) {
     }
 }
 
+@Composable
+fun HelloComposableStateFull() {
+    var name by remember{mutableStateOf("")}
+    val onNameChanged: (String) -> Unit = { name = it }
+    HelloComposableStateLess(name, onNameChanged)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HelloComposable() {
-    var name by remember{mutableStateOf("")}
+fun HelloComposableStateLess(name: String, onNameChanged: (String) -> Unit) {
 
     Column(modifier = Modifier.padding(16.dp)) {
         if(name.isNotEmpty()){
@@ -91,7 +93,7 @@ fun HelloComposable() {
         }
         OutlinedTextField(
             value = name,
-            onValueChange = { name = it },
+            onValueChange = onNameChanged,
             label = { Text(text = "name") }
         )
     }
