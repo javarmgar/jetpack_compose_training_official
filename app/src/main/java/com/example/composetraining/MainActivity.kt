@@ -18,18 +18,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.paddingFromBaseline
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.mapSaver
@@ -42,10 +46,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.composetraining.ui.theme.ComposeTrainingTheme
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.MutableStateFlow
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,37 +68,121 @@ class MainActivity : ComponentActivity() {
 
 }
 
-val size = 10
-val waitingTime = 1000L
-val list: List<String> = List(size = size){ "This is the item: $it " }
-val listFlow: Flow<String> = flow<String> {
-    list.forEach {
-        delay(waitingTime)
-        emit(it)
+@Stable
+class MyFirstHolderState(
+    val name:MutableStateFlow<String>,
+    val onFirstUserChange: () -> Unit = { name.value = "Rodrigo"},
+    val onSecondUserChange: () -> Unit = { name.value = "javier"}
+)
+
+@Composable
+private fun rememberMyFirstHolderState(name:String): MyFirstHolderState{
+    return remember (name){
+        MyFirstHolderState(MutableStateFlow(name))
+    }
+}
+@Composable
+fun App(
+    modifier: Modifier = Modifier,
+    mainViewModel:MainViewModel = viewModel(),
+) {
+    val uiItemState by mainViewModel.listFlow.collectAsStateWithLifecycle(initialValue = "Nothing collected")
+    LazyColumn(modifier = modifier.fillMaxWidth()) {
+        item {
+            CounterScreen(
+                mainViewModel.counterLDState.observeAsState().value?:0,
+                mainViewModel::increaseCounterByOne,
+                )
+        }
+        item {
+            CounterMultiplesScreen(
+                mainViewModel.counterMultipleLD.observeAsState().value?:0,
+            )
+        }
+        item {
+            PlainStateHolderScreen()
+        }
+        item { ItemsScreen(uiItemState) }
+        item { HelloComposableStateFull() }
+        item { ArtistCardColumn(modifier = modifier) }
+        item { ArtistCardRow(modifier = modifier) }
+        item { ArtistCardBox() }
+        item { WithConstraintsComposable() }
+        item { ArtistCard2(artist = Artist()) }
+        item { OffsetCard() }
+        item { WeightedCard() }
+        item { CityScreen() }
     }
 }
 
 @Composable
-fun App(modifier: Modifier = Modifier) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        ItemsScreen()
-        HelloComposableStateFull()
-        ArtistCardColumn(modifier = modifier)
-        ArtistCardRow(modifier = modifier)
-        ArtistCardBox()
-        WithConstraintsComposable()
-        ArtistCard2(artist = Artist())
-        OffsetCard()
-        WeightedCard()
-        CityScreen()
+fun PlainStateHolderScreen() {
+    val uiState: MyFirstHolderState = rememberMyFirstHolderState(name = "default")
+    PlainStateHolderContent(
+        uiState = uiState.name.collectAsStateWithLifecycle(),
+        onFirstUserChange = uiState.onFirstUserChange,
+        onSecondUserChange = uiState.onSecondUserChange,
+    )
+
+}
+@Composable
+fun PlainStateHolderContent(
+    uiState: State<String>,
+    onFirstUserChange: () -> Unit,
+    onSecondUserChange: () -> Unit
+) {
+    Column {
+        Text(text = "The is state is ${uiState.value}")
+        Row {
+            OutlinedButton(onClick = onFirstUserChange) {
+                Text(text = "First change")
+            }
+            OutlinedButton(onClick = onSecondUserChange) {
+                Text(text = "Second change")
+            }
+        }
     }
 }
 
 @Composable
-fun ItemsScreen() {
+fun CounterMultiplesScreen(counterMultipleState: Int) {
+    CounterMultiplesContent(counterMultipleState)
+}
+
+@Composable
+fun CounterMultiplesContent(counterMultipleState: Int) {
+    Text(text = "The multiple by 10 counter is:$counterMultipleState")
+}
+
+@Composable
+fun CounterScreen(
+    counterLDState: Int,
+    increaseCounterByOne: () -> Unit,
+) {
+    CounterContent(
+        counter = counterLDState,
+        onUpdateCounter = increaseCounterByOne,
+    )
+}
+
+@Composable
+fun CounterContent(
+    counter: Int,
+    onUpdateCounter: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column {
+        Text(text = "The counter is:$counter")
+        OutlinedButton(onClick = onUpdateCounter) {
+            Text("change the count")
+        }
+    }
+
+}
+
+@Composable
+fun ItemsScreen(uiState: String) {
     //1 state
-
-    val uiState by listFlow.collectAsState(initial = "Nothing collected")
     var itemSelectedState by rememberSaveable {
         mutableStateOf("")
     }
