@@ -265,6 +265,58 @@ fun HelloComposableStateFull() {
     HelloComposableStateLess(name, onNameChanged)
 }
 
+/*
+State hoisting
+
+    - Pattern of moving state to a composable's caller to make a composable stateless.
+    - The general pattern for state hoisting in Jetpack Compose is to replace the state variable with two parameters:
+        - value: T: the current value to display
+        - onValueChange: (T) -> Unit: an event that requests the value to change, where T is the proposed new value
+
+ */
+
+/*
+Hoisted State properties:
+    - Single source of truth:
+        - By moving state instead of duplicating it,
+        - we're ensuring there's only one source of truth.
+        - This helps avoid bugs.
+    - Encapsulated:
+        - Only stateful composables can modify their state.
+        - It's completely internal.
+    - Shareable:
+        - Hoisted state can be shared with multiple composables.
+        - If you wanted to read state in a different composable, hoisting would allow you to do that.
+    - Interceptable:
+        - callers to the stateless composables can decide to ignore or modify events before changing the state.
+    - Decoupled:
+        - the state for the stateless Composable may be stored anywhere.
+        - For example,
+            - it's now possible to move state into a ViewModel.
+
+ */
+
+/*
+UDF = unidirectional data flow
+    - The pattern where
+        - the state goes down, and
+        - events go up is called
+    - By following unidirectional data flow,
+        - you can decouple
+            - composables that display state in the UI
+            from
+            - the parts of your app that store and change state.
+
+
+ */
+
+/*
+Rules for hoisting state
+
+    1.- State should be hoisted to at least the lowest common parent of all composables that use the state (read).
+    2.- State should be hoisted to at least the highest level it may be changed (write).
+    3.- If two states change in response to the same events they should be hoisted together.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HelloComposableStateLess(name: String, onNameChanged: (String) -> Unit) {
