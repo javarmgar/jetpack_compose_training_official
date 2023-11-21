@@ -238,6 +238,26 @@ fun CityContent(city: City) {
     }
 }
 
+
+/*
+Stateful versus stateless
+    - stateful:A composable that uses remember to store an object creates internal state
+        - it holds and modifies its state internally.
+        - This can be useful in situations where a caller doesn't need to:
+            - control the state and
+            - can use it without having to manage the state themselves.
+            However,
+        - composables with internal state tend to be less reusable and harder to test.
+    - stateless: It's a composable that doesn't hold any state.
+        - An easy way to achieve stateless is by using state hoisting.
+
+
+    reusable composables
+    - you often want to expose both a stateful and a stateless version of the same composable.
+    - The stateful version is convenient for callers that don't care about the state,
+    - The stateless version is necessary for callers that need to control or hoist the state.
+
+ */
 @Composable
 fun HelloComposableStateFull() {
     var name by remember{mutableStateOf("")}
