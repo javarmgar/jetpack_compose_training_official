@@ -30,7 +30,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -48,6 +47,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.composetraining.models.Student
+import com.example.composetraining.stateholder.MyFirstHolderState
 import com.example.composetraining.ui.theme.ComposeTrainingTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -68,19 +69,6 @@ class MainActivity : ComponentActivity() {
 
 }
 
-@Stable
-class MyFirstHolderState(
-    val name:MutableStateFlow<String>,
-    val onFirstUserChange: () -> Unit = { name.value = "Rodrigo"},
-    val onSecondUserChange: () -> Unit = { name.value = "javier"}
-)
-
-@Composable
-private fun rememberMyFirstHolderState(name:String): MyFirstHolderState{
-    return remember (name){
-        MyFirstHolderState(MutableStateFlow(name))
-    }
-}
 @Composable
 fun App(
     modifier: Modifier = Modifier,
@@ -92,16 +80,14 @@ fun App(
             CounterScreen(
                 mainViewModel.counterLDState.observeAsState().value?:0,
                 mainViewModel::increaseCounterByOne,
-                )
+            )
         }
         item {
             CounterMultiplesScreen(
                 mainViewModel.counterMultipleLD.observeAsState().value?:0,
             )
         }
-        item {
-            PlainStateHolderScreen()
-        }
+        item { PlainStateHolderScreen() }
         item { ItemsScreen(uiItemState) }
         item { HelloComposableStateFull() }
         item { ArtistCardColumn(modifier = modifier) }
@@ -112,9 +98,72 @@ fun App(
         item { OffsetCard() }
         item { WeightedCard() }
         item { CityScreen() }
+        item { StudentScreen() }
+
     }
 }
 
+/*
+MapSaver
+    - If for some reason @Parcelize is not suitable,
+    - you can use mapSaver to define your own rule
+        - for converting an object into a set of values that the system can save to the Bundle.
+ */
+val studentSaver = run{
+    val firstNameKey = "firstName"
+    val lastNameKey = "lastName"
+    val ageKey = "age"
+    val degreeKey = "degree"
+    mapSaver(
+        save = { mapOf(
+            firstNameKey to it.firstName,
+            lastNameKey to it.lastName,
+            ageKey to it.age,
+            degreeKey to it.degree,
+        ) },
+        restore = {
+            Student(
+                firstName = it[firstNameKey] as String,
+                lastName = it[lastNameKey] as String,
+                age = it[ageKey] as Int,
+                degree = it[degreeKey] as String,
+            )
+        }
+    )
+}
+@Composable
+fun StudentScreen() {
+    val student by rememberSaveable(stateSaver = studentSaver) {
+        mutableStateOf(
+            Student(
+                firstName = "javier",
+                lastName = "Armenta",
+                age = 29,
+                degree = "Computer Science"
+            )
+        )
+    }
+    StudentContent(student)
+}
+
+@Composable
+fun StudentContent(student: Student) {
+    Column {
+        student.apply {
+            Text(text = this.firstName)
+            Text(text = this.lastName)
+            Text(text = this.age.toString())
+            Text(text = this.degree)
+        }
+    }
+}
+
+@Composable
+private fun rememberMyFirstHolderState(name:String): MyFirstHolderState {
+    return remember (name){
+        MyFirstHolderState(MutableStateFlow(name))
+    }
+}
 @Composable
 fun PlainStateHolderScreen() {
     val uiState: MyFirstHolderState = rememberMyFirstHolderState(name = "default")
@@ -260,7 +309,7 @@ Stateful versus stateless
  */
 @Composable
 fun HelloComposableStateFull() {
-    var name by remember{mutableStateOf("")}
+    var name by rememberSaveable{mutableStateOf("")}
     val onNameChanged: (String) -> Unit = { name = it }
     HelloComposableStateLess(name, onNameChanged)
 }
