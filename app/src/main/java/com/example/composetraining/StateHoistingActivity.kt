@@ -5,7 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -16,10 +15,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.TextStyle
 import com.example.composetraining.ui.theme.ComposeTrainingTheme
-import com.example.composetraining.ui.theme.Typography
 
 
 /*
@@ -126,7 +122,9 @@ fun ParentScreen() {
  */
 @Composable
 fun ChildOneScreen() {
-    GrandChildOneOneScreen("click me to show text message")
+    GrandChildOneOneScreen(
+        contentText = "click me to show text message"
+    )
 }
 
 
@@ -136,6 +134,11 @@ UI logic - Composables as state owner
 
 - Having UI logic and UI element state in composables is a good approach if the state and logic is simple.
 - You can leave your state internal to a composable or hoist as required.
+
+No state hoisting needed
+    - Hoisting state isn't always required.
+    - State can be kept internal in a composable when no other composable need to control it.
+    In this snippet, there is a composable that expands and collapses on tap:
  */
 
 @Composable
@@ -160,17 +163,44 @@ fun GrandChildOneOneScreen(contentText: String) {
  */
 @Composable
 fun ChildTwoScreen() {
+    var showDetails by rememberSaveable{ mutableStateOf(false) }
+    val onShowDetails = { showDetails = !showDetails }
     Column {
-        GrandChildTwoOneScreen()
+        GrandChildTwoOneScreen(
+            contentText = "click me to show text message",
+            showDetails = showDetails,
+            onShowDetails = onShowDetails
+        )
         GrandChildTwoTwoScreen()
     }
 
 }
 ///////////GRAND CHILDREN - BEGINNING////////////
+/*
+Hoisting within composables
 
+    - If you need to share your UI element state with other composables and apply UI logic to it in different places,
+    - you can hoist it higher in the UI hierarchy.
+    - This makes your composables more reusable and easier to test.
+ */
 @Composable
-fun GrandChildTwoOneScreen() {
+fun GrandChildTwoOneScreen(
+    contentText:String,
+    showDetails: Boolean,
+    onShowDetails: () -> Unit,
+) {
+
     Text(text = "GrandChildTwoOneScreen")
+    Button(
+        onClick = onShowDetails
+    ){
+        Text(text = contentText)
+    }
+    if(showDetails) {
+        Text(text = "This a show/hidden message")
+    }
+
+
 }
 
 @Composable
