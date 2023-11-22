@@ -3,13 +3,23 @@ package com.example.composetraining
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.text.ClickableText
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
 import com.example.composetraining.ui.theme.ComposeTrainingTheme
+import com.example.composetraining.ui.theme.Typography
 
 
 /*
@@ -56,29 +66,92 @@ UI TREE COMPOSITION STRUCTURE
             GRAND CHILDREN 3
             GRAND CHILDREN 4
  */
+
+/*
+Types of UI state and UI logic
+- UI state:
+    - Screen UI state
+        - is what you need to display on the screen.
+        - For example, a NewsUiState class contain the news articles and information needed to render the UI.
+        - usually connected with other layers of the hierarchy because it contains app data.
+    - UI element state
+        - properties intrinsic to UI elements that influence how they are rendered.
+        - A UI element
+        - may be shown or hidden and
+        - may have a certain font, font size, or font color.
+        - In Android Views:
+            - the View manages this state itself as it is inherently stateful,
+            - exposing methods to modify or query its state.
+            - An example of this are the get and set methods of the TextView class for its text.
+        - In Jetpack Compose
+            - the state is external to the composable,
+            - you can even hoist it out:
+                - out of the immediate vicinity of the composable into
+                    - the calling composable function or
+                    - a state holder.
+                - An example of this is ScaffoldState for the Scaffold composable.
+
+
+- Logic
+    - Business logic:
+        - It is the implementation of product requirements for app data.
+            - For example,
+                - bookmarking an article in a news reader app when the user taps the button.
+                - This logic to save a bookmark to a file or database is usually placed in the domain or data layers.
+                - The state holder usually delegates this logic to those layers by calling the methods they expose.
+    - UI logic:
+        - It is related to how to display UI state on the screen.
+            - For example,
+                - obtaining the right search bar hint when the user has selected a category,
+                - scrolling to a particular item in a list, or
+                - the navigation logic to a particular screen when the user clicks a button.
+ */
+
+/*
+This ParentScreen is the UI screen - so it should host the Screen UI state
+ */
 @Composable
 fun ParentScreen() {
-    ChildOneScreen()
-    ChildTwoScreen()
-    ChildThreeScreen()
-    ChildFourScreen()
+    Column {
+        ChildOneScreen()
+        ChildTwoScreen()
+        ChildThreeScreen()
+        ChildFourScreen()
+    }
 }
 
 /*
     CHILDREN 1:
         GRAND CHILDREN 1
  */
-
-///////////GRAND CHILDREN - BEGINNING////////////
 @Composable
 fun ChildOneScreen() {
-    GrandChildOneOneScreen()
+    GrandChildOneOneScreen("click me to show text message")
+}
+
+
+///////////GRAND CHILDREN - BEGINNING////////////
+/*
+UI logic - Composables as state owner
+
+- Having UI logic and UI element state in composables is a good approach if the state and logic is simple.
+- You can leave your state internal to a composable or hoist as required.
+ */
+
+@Composable
+fun GrandChildOneOneScreen(contentText: String) {
+    var showDetails by rememberSaveable{ mutableStateOf(false) }
+    Text(text = "GrandChildOneOneScreen")
+    Button(
+        onClick = { showDetails = !showDetails }
+    ){
+        Text(text = contentText)
+    }
+    if(showDetails) {
+        Text(text = "This a show/hidden message")
+    }
 }
 ///////////GRAND CHILDREN - END////////////
-@Composable
-fun GrandChildOneOneScreen() {
-    Text(text = "GrandChildOneOneScreen")
-}
 
 /*
     CHILDREN 2:
@@ -87,8 +160,10 @@ fun GrandChildOneOneScreen() {
  */
 @Composable
 fun ChildTwoScreen() {
-    GrandChildTwoOneScreen()
-    GrandChildTwoTwoScreen()
+    Column {
+        GrandChildTwoOneScreen()
+        GrandChildTwoTwoScreen()
+    }
 
 }
 ///////////GRAND CHILDREN - BEGINNING////////////
@@ -112,9 +187,11 @@ fun GrandChildTwoTwoScreen() {
  */
 @Composable
 fun ChildThreeScreen() {
-    GrandChildThreeOneScreen()
-    GrandChildThreeTwoScreen()
-    GrandChildThreeThreeScreen()
+    Column {
+        GrandChildThreeOneScreen()
+        GrandChildThreeTwoScreen()
+        GrandChildThreeThreeScreen()
+    }
 }
 ///////////GRAND CHILDREN - BEGINNING////////////
 
@@ -143,10 +220,12 @@ fun GrandChildThreeThreeScreen() {
  */
 @Composable
 fun ChildFourScreen() {
-    GrandChildFourOneScreen()
-    GrandChildFourTwoScreen()
-    GrandChildFourThreeScreen()
-    GrandChildFourFourScreen()
+    Column {
+        GrandChildFourOneScreen()
+        GrandChildFourTwoScreen()
+        GrandChildFourThreeScreen()
+        GrandChildFourFourScreen()
+    }
 }
 ///////////GRAND CHILDREN - BEGINNING////////////
 
