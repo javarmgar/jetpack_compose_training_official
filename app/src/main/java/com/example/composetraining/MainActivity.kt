@@ -143,11 +143,29 @@ fun StudentScreen() {
             )
         )
     }
-    StudentContent(student)
+
+    var isFailingSubject by remember {
+        mutableStateOf(true)
+    }
+    val onFailingSubjectChange = { isFailingSubject = !isFailingSubject}
+
+    val studentStatusState by remember(key1= isFailingSubject ){
+        mutableStateOf(if(isFailingSubject) "Should recompose" else "Should not recompose")
+    }
+    Column {
+        StudentContent(
+            student = student,
+            onFailingSubjectChange = onFailingSubjectChange
+        )
+        StudentInfoContent(studentStatusState)
+    }
 }
 
 @Composable
-fun StudentContent(student: Student) {
+fun StudentContent(
+    student: Student,
+    onFailingSubjectChange: () -> Unit
+) {
     Column {
         student.apply {
             Text(text = this.firstName)
@@ -155,6 +173,16 @@ fun StudentContent(student: Student) {
             Text(text = this.age.toString())
             Text(text = this.degree)
         }
+        Button(onClick = onFailingSubjectChange) {
+            Text(text = "Set Failing subject")
+        }
+    }
+}
+
+@Composable
+fun StudentInfoContent(studentStatusState: String) {
+    Column {
+        Text(text = studentStatusState)
     }
 }
 
