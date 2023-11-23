@@ -10,11 +10,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.composetraining.stateholder.HolderState
+import com.example.composetraining.stateholder.rememberHolderState
 import com.example.composetraining.ui.theme.ComposeTrainingTheme
 
 
@@ -171,7 +175,7 @@ fun ChildTwoScreen() {
             showDetails = showDetails,
             onShowDetails = onShowDetails
         )
-        GrandChildTwoTwoScreen()
+        GrandChildTwoTwoScreen(showDetails)
     }
 
 }
@@ -200,12 +204,16 @@ fun GrandChildTwoOneScreen(
         Text(text = "This a show/hidden message")
     }
 
-
 }
 
 @Composable
-fun GrandChildTwoTwoScreen() {
+fun GrandChildTwoTwoScreen(showDetails: Boolean) {
     Text(text = "GrandChildTwoTwoScreen")
+    if(showDetails){
+        Text(
+            text = "show details is a state also being shared here in GrandChildTwoTwoScreen"
+        )
+    }
 }
 ///////////GRAND CHILDREN - END////////////
 
@@ -215,19 +223,53 @@ fun GrandChildTwoTwoScreen() {
         GRAND CHILDREN 2
         GRAND CHILDREN 3
  */
+
 @Composable
-fun ChildThreeScreen() {
+fun ChildThreeScreen(
+    holderState:HolderState = rememberHolderState()
+) {
     Column {
-        GrandChildThreeOneScreen()
+        GrandChildThreeOneScreen(
+            contentText = "click me to show text message",
+            showDetails = holderState.showDetails.collectAsStateWithLifecycle(),
+            onShowDetails = holderState.onShowDetails,
+        )
         GrandChildThreeTwoScreen()
         GrandChildThreeThreeScreen()
     }
 }
 ///////////GRAND CHILDREN - BEGINNING////////////
+/*
+Plain state holder class as state owner
 
+- When a composable contains complex UI logic that involves one or multiple state fields of a UI element,
+- then it should delegate that responsibility to state holders, like a plain state holder class.
+- This makes the composable logic
+    - more testable in isolation, and
+    - reduces its complexity.
+- This approach favors the separation of concerns principle:
+    - the composable is in charge of emitting UI elements, and
+    - the state holder contains
+        - the UI logic and
+        - UI element state.
+
+
+ */
 @Composable
-fun GrandChildThreeOneScreen() {
+fun GrandChildThreeOneScreen(
+    contentText:String,
+    showDetails: State<Boolean>,
+    onShowDetails: () -> Unit,
+) {
     Text(text = "GrandChildThreeOneScreen")
+    Button(
+        onClick = onShowDetails
+    ){
+        Text(text = contentText)
+    }
+    if(showDetails.value) {
+        Text(text = "This a show/hidden message using state holder class")
+    }
 }
 
 @Composable
