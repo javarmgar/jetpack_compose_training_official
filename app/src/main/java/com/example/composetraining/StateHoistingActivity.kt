@@ -17,6 +17,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.composetraining.stateholder.HolderState
 import com.example.composetraining.stateholder.rememberHolderState
 import com.example.composetraining.ui.theme.ComposeTrainingTheme
@@ -224,9 +225,26 @@ fun GrandChildTwoTwoScreen(showDetails: Boolean) {
         GRAND CHILDREN 3
  */
 
+
+/*
+ViewModels as state owner
+- The benefits of  ViewModels  make them suitable for:
+    - providing access to the business logic
+    - preparing the application data for presentation on the screen.
+
+- When you hoist UI state in the ViewModel, you move it outside of the Composition.
+    - ViewModels aren't stored as part of the Composition.
+    - They're provided by the framework and
+    - they're scoped to a ViewModelStoreOwner which can be
+        - an Activity,
+        - Fragment,
+        - navigation graph, or d
+        - destination of a navigation graph.
+ */
 @Composable
 fun ChildThreeScreen(
-    holderState:HolderState = rememberHolderState()
+    holderState:HolderState = rememberHolderState(),
+    screenState:StateHoistingViewModel = viewModel(),
 ) {
     Column {
         GrandChildThreeOneScreen(
@@ -234,7 +252,11 @@ fun ChildThreeScreen(
             showDetails = holderState.showDetails.collectAsStateWithLifecycle(),
             onShowDetails = holderState.onShowDetails,
         )
-        GrandChildThreeTwoScreen()
+        GrandChildThreeTwoScreen(
+            contentText = "click me to show text message",
+            showDetails = screenState.showDetails.collectAsStateWithLifecycle(),
+            onShowDetails = screenState::onShowDetails,
+        )
         GrandChildThreeThreeScreen()
     }
 }
@@ -272,9 +294,30 @@ fun GrandChildThreeOneScreen(
     }
 }
 
+/*
+Business logic
+
+- composables and plain state holders classes <===>  in charge of the [UI logic] and [UI element state],
+- a screen level state holder(plain or VM)   <===> is in charge of the following tasks:
+                                                    - access to the business logic
+                                                    - [Screen UI state]
+
+ */
 @Composable
-fun GrandChildThreeTwoScreen() {
+fun GrandChildThreeTwoScreen(
+    contentText:String,
+    showDetails: State<Boolean>,
+    onShowDetails: () -> Unit,
+) {
     Text(text = "GrandChildThreeTwoScreen")
+    Button(
+        onClick = onShowDetails
+    ){
+        Text(text = contentText)
+    }
+    if(showDetails.value) {
+        Text(text = "This a show/hidden message using ViewModel class")
+    }
 }
 
 @Composable
