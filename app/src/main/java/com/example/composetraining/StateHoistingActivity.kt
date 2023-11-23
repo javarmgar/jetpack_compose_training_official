@@ -112,12 +112,34 @@ Types of UI state and UI logic
 This ParentScreen is the UI screen - so it should host the Screen UI state
  */
 @Composable
-fun ParentScreen() {
+fun ParentScreen(
+    screenState:StateHoistingViewModel = viewModel(),
+) {
     Column {
         ChildOneScreen()
         ChildTwoScreen()
         ChildThreeScreen()
-        ChildFourScreen()
+        /*
+        Property drilling
+            -  refers to passing data through several nested children components to the location where they’re read.
+            - A typical example is when
+                - you inject the screen level state holder at the top level
+                    - and pass down state and events to children composables.
+                    - This might additionally generate an overload of composable functions signatures.
+
+            - Even though exposing events as individual lambda parameters could overload the function signature,
+            - it maximizes the visibility of what the composable function responsibilities are.
+            - Property drilling is preferable over creating wrapper classes
+                - to encapsulate state and events in one place because
+                - this reduces the visibility of the composable responsibilities.
+            - By not having wrapper classes you’re also
+                - more likely to pass composables only the parameters they need, which is a best practice.
+                - The same best practice applies if these events are navigation events
+         */
+        ChildFourScreen(
+            showDetails = screenState.showDetails.collectAsStateWithLifecycle(),
+            onShowDetails = screenState::onShowDetails,
+        )
     }
 }
 
@@ -334,9 +356,15 @@ fun GrandChildThreeThreeScreen() {
         GRAND CHILDREN 4
  */
 @Composable
-fun ChildFourScreen() {
+fun ChildFourScreen(
+    showDetails: State<Boolean>,
+    onShowDetails: () -> Unit,
+) {
     Column {
-        GrandChildFourOneScreen()
+        GrandChildFourOneScreen(
+            showDetails = showDetails,
+            onShowDetails = onShowDetails,
+        )
         GrandChildFourTwoScreen()
         GrandChildFourThreeScreen()
         GrandChildFourFourScreen()
@@ -345,8 +373,19 @@ fun ChildFourScreen() {
 ///////////GRAND CHILDREN - BEGINNING////////////
 
 @Composable
-fun GrandChildFourOneScreen() {
+fun GrandChildFourOneScreen(
+    showDetails: State<Boolean>,
+    onShowDetails: () -> Unit,
+) {
     Text(text = "GrandChildFourOneScreen")
+    Button(
+        onClick = onShowDetails
+    ){
+        Text(text = "Click me to show more")
+    }
+    if(showDetails.value) {
+        Text(text = "This a show/hidden message using ViewModel class")
+    }
 }
 
 @Composable
