@@ -3,24 +3,33 @@ package com.example.composetraining
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CardElevation
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.composetraining.stateholder.HolderState
 import com.example.composetraining.stateholder.rememberHolderState
 import com.example.composetraining.ui.theme.ComposeTrainingTheme
+import com.example.composetraining.ui.theme.Elevations
+import com.example.composetraining.ui.theme.LocalElevations
+import com.example.composetraining.ui.theme.StandardElevations
 
 
 /*
@@ -37,12 +46,36 @@ class StateHoistingActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            val elevations = if(isSystemInDarkTheme()){
+                Elevations( card = 1.dp, default = 1.dp)
+            } else {
+                Elevations( card = 0.dp, default = 0.dp)
+            }
+/*
+Locally scoped data with CompositionLocal
+    CompositionLocal is a tool for passing data down through the Composition implicitly.
+    - what a CompositionLocal is in more detail,
+    - how to create your own CompositionLocal, and
+    - know if a CompositionLocal is a good solution for your use case.
+ */
             ComposeTrainingTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    ParentScreen()
+                    /*
+                    Providing values to a CompositionLocal
+                    The CompositionLocalProvider composable
+                        - binds values to CompositionLocal instances for the given hierarchy.
+                    - To provide a new value to a CompositionLocal,
+                        - use the provides infix function that associates
+                            - a CompositionLocal key to a value as follows
+
+
+                     */
+                    CompositionLocalProvider( LocalElevations provides elevations){
+                        ParentScreen()
+                    }
                 }
             }
         }
@@ -116,6 +149,13 @@ fun ParentScreen(
     screenState:StateHoistingViewModel = viewModel(),
 ) {
     Column {
+        /*
+        Consuming the CompositionLocal
+        CompositionLocal.current
+            - returns the value provided by the nearest CompositionLocalProvider
+            - that provides a value to that CompositionLocal
+         */
+        Text(text = "${LocalElevations.current.card}")
         ChildOneScreen()
         ChildTwoScreen()
         ChildThreeScreen()
@@ -149,9 +189,11 @@ fun ParentScreen(
  */
 @Composable
 fun ChildOneScreen() {
-    GrandChildOneOneScreen(
-        contentText = "click me to show text message"
-    )
+    CompositionLocalProvider( LocalElevations provides StandardElevations.XS){
+        GrandChildOneOneScreen(
+            contentText = "click me to show text message"
+        )
+    }
 }
 
 
@@ -172,6 +214,7 @@ No state hoisting needed
 fun GrandChildOneOneScreen(contentText: String) {
     var showDetails by rememberSaveable{ mutableStateOf(false) }
     Text(text = "GrandChildOneOneScreen")
+    Text(text = "${LocalElevations.current.card}")
     Button(
         onClick = { showDetails = !showDetails }
     ){
@@ -192,13 +235,15 @@ fun GrandChildOneOneScreen(contentText: String) {
 fun ChildTwoScreen() {
     var showDetails by rememberSaveable{ mutableStateOf(false) }
     val onShowDetails = { showDetails = !showDetails }
-    Column {
-        GrandChildTwoOneScreen(
-            contentText = "click me to show text message",
-            showDetails = showDetails,
-            onShowDetails = onShowDetails
-        )
-        GrandChildTwoTwoScreen(showDetails)
+    CompositionLocalProvider( LocalElevations provides StandardElevations.S){
+        Column {
+            GrandChildTwoOneScreen(
+                contentText = "click me to show text message",
+                showDetails = showDetails,
+                onShowDetails = onShowDetails
+            )
+            GrandChildTwoTwoScreen(showDetails)
+        }
     }
 
 }
@@ -218,6 +263,7 @@ fun GrandChildTwoOneScreen(
 ) {
 
     Text(text = "GrandChildTwoOneScreen")
+    Text(text = "${LocalElevations.current.card}")
     Button(
         onClick = onShowDetails
     ){
@@ -268,18 +314,21 @@ fun ChildThreeScreen(
     holderState:HolderState = rememberHolderState(),
     screenState:StateHoistingViewModel = viewModel(),
 ) {
-    Column {
-        GrandChildThreeOneScreen(
-            contentText = "click me to show text message",
-            showDetails = holderState.showDetails.collectAsStateWithLifecycle(),
-            onShowDetails = holderState.onShowDetails,
-        )
-        GrandChildThreeTwoScreen(
-            contentText = "click me to show text message",
-            showDetails = screenState.showDetails.collectAsStateWithLifecycle(),
-            onShowDetails = screenState::onShowDetails,
-        )
-        GrandChildThreeThreeScreen()
+    CompositionLocalProvider( LocalElevations provides StandardElevations.M){
+
+        Column {
+            GrandChildThreeOneScreen(
+                contentText = "click me to show text message",
+                showDetails = holderState.showDetails.collectAsStateWithLifecycle(),
+                onShowDetails = holderState.onShowDetails,
+            )
+            GrandChildThreeTwoScreen(
+                contentText = "click me to show text message",
+                showDetails = screenState.showDetails.collectAsStateWithLifecycle(),
+                onShowDetails = screenState::onShowDetails,
+            )
+            GrandChildThreeThreeScreen()
+        }
     }
 }
 ///////////GRAND CHILDREN - BEGINNING////////////
@@ -306,6 +355,7 @@ fun GrandChildThreeOneScreen(
     onShowDetails: () -> Unit,
 ) {
     Text(text = "GrandChildThreeOneScreen")
+    Text(text = "${LocalElevations.current.card}")
     Button(
         onClick = onShowDetails
     ){
@@ -360,14 +410,19 @@ fun ChildFourScreen(
     showDetails: State<Boolean>,
     onShowDetails: () -> Unit,
 ) {
-    Column {
-        GrandChildFourOneScreen(
-            showDetails = showDetails,
-            onShowDetails = onShowDetails,
-        )
-        GrandChildFourTwoScreen()
-        GrandChildFourThreeScreen()
-        GrandChildFourFourScreen()
+    CompositionLocalProvider( LocalElevations provides StandardElevations.L){
+        Card(elevation = CardDefaults.cardElevation(LocalElevations.current.card)) {
+            Column {
+                Text(text = "${LocalElevations.current.card}")
+                GrandChildFourOneScreen(
+                    showDetails = showDetails,
+                    onShowDetails = onShowDetails,
+                )
+                GrandChildFourTwoScreen()
+                GrandChildFourThreeScreen()
+                GrandChildFourFourScreen()
+            }
+        }
     }
 }
 ///////////GRAND CHILDREN - BEGINNING////////////
