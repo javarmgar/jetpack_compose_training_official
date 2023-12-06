@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -32,6 +33,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.navigation.navigation
 import com.example.composetraining.stateholder.HolderState
 import com.example.composetraining.stateholder.rememberHolderState
 import com.example.composetraining.ui.theme.ComposeTrainingTheme
@@ -260,6 +262,7 @@ fun MyAppNavHost(
     val onNavigateToScreenThree = { navController.navigate(ROUTE_SCREEN_THREE) }
     val onNavigateToScreenFour  = { navController.navigate(ROUTE_SCREEN_FOUR) }
     val onNavigateToScreenFive  = { navController.navigate(ROUTE_SCREEN_FIVE) }
+    val onNavigateToNestedGraph  = { navController.navigate(ROUTE_NESTED_GRAPH) }
 
     val navGraphBuilder: NavGraphBuilder.() -> Unit = {
         composable(
@@ -294,7 +297,10 @@ fun MyAppNavHost(
             )
         }
         composable(ROUTE_SCREEN_FOUR){ ScreenFour() }
-        composable(ROUTE_SCREEN_FIVE){ ScreenFive() }
+        composable(ROUTE_SCREEN_FIVE){ ScreenFive(onNavigateToNestedGraph) }
+        nestedGraph(
+            navController = navController
+        )
     }
 
     /*
@@ -703,10 +709,92 @@ fun ScreenFour() {
     )
 }
 @Composable
-fun ScreenFive() {
+fun ScreenFive(
+    onNavigateToNestedGraph: () -> Unit
+) {
+    Column {
+        Text(
+            modifier = Modifier.fillMaxWidth(),
+            text = "Screen five"
+        )
+        Button(onClick = onNavigateToNestedGraph) {
+            Text(text = "Navigate to nested Graph")
+        }
+    }
+}
+
+/*
+Nested Navigation
+
+    - Destinations can be grouped into a nested graph to modularize a particular flow in your app’s UI.
+        - An example of this could be a self-contained login flow.
+    - The nested graph encapsulates its destinations.
+        - As with the root graph,
+            - a nested graph must have a destination identified as the start destination by its route.
+            - This is the destination that is navigated to when you navigate to the route associated with the nested graph.
+    - To add a nested graph to your NavHost, you can use the navigation extension function:
+    - It is strongly recommended that
+        - you split your navigation graph into multiple methods as the graph grows in size.
+        - This also allows multiple modules to contribute their own navigation graphs.
+        - By making the method an extension method on NavGraphBuilder,
+        - you can use it alongside the prebuilt navigation, composable, and dialog extension methods:
+ */
+
+/*
+nested graph
+    n1 n2
+    n1 n3
+ */
+
+fun NavGraphBuilder.nestedGraph(
+    navController: NavController
+){
+    navigation(
+        startDestination = ROUTE_NESTED_SCREEN_ONE,
+        route = ROUTE_NESTED_GRAPH
+    ){
+        composable(ROUTE_NESTED_SCREEN_ONE){
+            ScreenNestedOne(
+                onNavigateNestedScreenTwo = { navController.navigate(ROUTE_NESTED_SCREEN_TWO) },
+                onNavigateNestedScreenThree = { navController.navigate(ROUTE_NESTED_SCREEN_THREE) }
+            )
+        }
+        composable(ROUTE_NESTED_SCREEN_TWO){ ScreenNestedTwo() }
+        composable(ROUTE_NESTED_SCREEN_THREE){ ScreenNestedThree() }
+    }
+}
+
+@Composable
+fun ScreenNestedOne(
+    onNavigateNestedScreenTwo: () -> Unit,
+    onNavigateNestedScreenThree: () -> Unit,
+) {
+    Column {
+        Text(
+            modifier = Modifier.fillMaxWidth(),
+            text = "Screen nested one"
+        )
+        Button(onClick = onNavigateNestedScreenTwo) {
+            Text(text = "Navigate to nested screen two")
+        }
+        Button(onClick = onNavigateNestedScreenThree) {
+            Text(text = "Navigate to nested screen two")
+        }
+    }
+}
+
+@Composable
+fun ScreenNestedTwo() {
     Text(
         modifier = Modifier.fillMaxWidth(),
-        text = "Screen five"
+        text = "Screen nested two"
+    )
+}
+@Composable
+fun ScreenNestedThree() {
+    Text(
+        modifier = Modifier.fillMaxWidth(),
+        text = "Screen  nested three"
     )
 }
 
@@ -716,3 +804,9 @@ const val ROUTE_SCREEN_TWO = "ROUTE_SCREEN_TWO"
 const val ROUTE_SCREEN_THREE = "ROUTE_SCREEN_THREE"
 const val ROUTE_SCREEN_FOUR = "ROUTE_SCREEN_FOUR"
 const val ROUTE_SCREEN_FIVE = "ROUTE_SCREEN_FIVE"
+
+const val ROUTE_NESTED_GRAPH = "ROUTE_NESTED_GRAPH"
+
+const val ROUTE_NESTED_SCREEN_ONE = "ROUTE_NESTED_SCREEN_ONE"
+const val ROUTE_NESTED_SCREEN_TWO = "ROUTE_NESTED_SCREEN_TWO"
+const val ROUTE_NESTED_SCREEN_THREE = "ROUTE_NESTED_SCREEN_THREE"
