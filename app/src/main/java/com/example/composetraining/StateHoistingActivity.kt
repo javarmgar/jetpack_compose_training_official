@@ -5,11 +5,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CardElevation
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -24,6 +27,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.composetraining.stateholder.HolderState
 import com.example.composetraining.stateholder.rememberHolderState
 import com.example.composetraining.ui.theme.ComposeTrainingTheme
@@ -148,6 +156,159 @@ This ParentScreen is the UI screen - so it should host the Screen UI state
 fun ParentScreen(
     screenState:StateHoistingViewModel = viewModel(),
 ) {
+    var isNavGraphFlowVisible by rememberSaveable { mutableStateOf(true) }
+    Column {
+
+        Button(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.1f),
+            onClick = {
+                isNavGraphFlowVisible = !isNavGraphFlowVisible
+            }
+        ) {
+            Text(text = "change UI")
+        }
+        if(isNavGraphFlowVisible){
+            MyAppNavHost()
+        }else{
+            showUITreeScreen(screenState)
+        }
+    }
+}
+
+/*
+Navigating with Compose
+
+- The Navigation component provides support for Jetpack Compose applications.
+- You can navigate between composables while taking advantage of
+    - the Navigation component’s infrastructure and features.
+
+
+NavController:
+    -Tis the central API for the Navigation component.
+    - It is stateful and
+    - keeps track of the back stack of composables that make up the screens in your app
+    - and the state of each screen.
+    - You can create a NavController by using the rememberNavController() method in your composable:
+    - You should create the NavController in
+        - the place in your composable hierarchy where
+        - all composables that need to reference it have access to it.
+        - This follows the principles of state hoisting and
+        - allows you to use the NavController and the state it provides via currentBackStackEntryAsState()
+        - to be used as the source of truth for updating composables outside of your screens.
+ */
+@Composable
+fun MyAppNavHost(
+    modifier: Modifier = Modifier,
+    navController: NavHostController = rememberNavController(),
+    startDestination:String = ROUTE_SCREEN_ONE
+) {
+/*
+    1-2
+    1-3-4
+    1-3-5
+ */
+
+    /*
+    Navigate to a destination:
+        - The Navigation component provides a simple way of navigating to a destination.
+        - This interface supports a range of contexts and UI frameworks.
+            - For example, you can use the Navigation component with
+                - Compose,
+                - Views,
+                - Fragments,
+                - Activities, and even
+                - custom UI frameworks.
+
+        - Each NavHost you create has its own corresponding NavController. T
+        - The NavController provides access to the NavHost's graph.
+    Navigate
+        - Regardless of which UI framework you use,
+        - there is a single function you can use to navigate to a destination:
+            - NavController.navigate().
+
+        - There are many overloads available for navigate().
+        - The overload you should choose corresponds to your exact context.
+            - For example,
+                - you should use one overload when navigating to a composable and
+                - another when navigating to a view.
+
+    Navigate to a composable
+        - To navigate to a composable in the navigation graph,
+            - use NavController.navigate(route).
+            - With this overload, navigate() takes a single String argument.
+            - This is the route. It serves as the key to a destination.
+                - example: navController.navigate("friendslist")
+
+            - To navigate using a route string,
+                1 - you first need to create your NavGraph
+                    - such that each destination is associated with a route.
+                    - For composables, you do so with the composable() function.
+                2 - Expose events from your composables
+                    - When a composable function needs to navigate to a new screen,
+                    - you shouldn't pass it a reference to the NavController so that it can call navigate() directly.
+                    - According to Unidirectional Data Flow (UDF) principles,
+                        - it should instead expose an event that the NavController handles.
+                    - More directly put, your composable should have a parameter of type () -> Unit.
+                    - When you add destinations to your NavHost with the composable() function,
+                    - pass your composable a call to NavController.navigate().
+
+     */
+    val onNavigateToScreenTwo   = { navController.navigate(ROUTE_SCREEN_TWO) }
+    val onNavigateToScreenThree = { navController.navigate(ROUTE_SCREEN_THREE) }
+    val onNavigateToScreenFour  = { navController.navigate(ROUTE_SCREEN_FOUR) }
+    val onNavigateToScreenFive  = { navController.navigate(ROUTE_SCREEN_FIVE) }
+
+    val navGraphBuilder: NavGraphBuilder.() -> Unit = {
+        composable(ROUTE_SCREEN_ONE){
+            ScreenOne(
+                onNavigateToScreenTwo,
+                onNavigateToScreenThree,
+            )
+        }
+        composable(ROUTE_SCREEN_TWO){ ScreenTwo() }
+        composable(ROUTE_SCREEN_THREE){
+            ScreenThree(
+                onNavigateToScreenFour,
+                onNavigateToScreenFive,
+            )
+        }
+        composable(ROUTE_SCREEN_FOUR){ ScreenFour() }
+        composable(ROUTE_SCREEN_FIVE){ ScreenFive() }
+    }
+
+    /*
+    Creating a NavHost
+        - Each NavController must be associated with a single NavHost composable.
+        - The NavHost links
+            - the NavController with
+            - a navigation graph that specifies the composable destinations that you should be able to navigate between
+        - As you navigate between composables,
+            - the content of the NavHost is automatically recomposed.
+        - Each composable destination in your navigation graph is associated with a route.
+    - Route
+        - is a String that defines the path to your composable.
+        - You can think of it as an implicit deep link that leads to a specific destination.
+        - Each destination should have a unique route.
+    - Creating the NavHost
+        - requires the NavController previously created via rememberNavController()
+         - and the route of the starting destination of your graph.
+         - NavHost creation uses the lambda syntax from the Navigation Kotlin DSL to
+            - construct your navigation graph.
+            - You can add to your navigation structure by using the composable() method.
+            - This method requires that you provide a route and the composable that should be linked to the destination:
+     */
+    NavHost(
+        navController = navController,
+        startDestination = startDestination,
+        builder = navGraphBuilder
+    )
+
+}
+
+@Composable
+fun showUITreeScreen(screenState: StateHoistingViewModel) {
     Column {
         /*
         Consuming the CompositionLocal
@@ -181,6 +342,7 @@ fun ParentScreen(
             onShowDetails = screenState::onShowDetails,
         )
     }
+
 }
 
 /*
@@ -457,4 +619,80 @@ fun GrandChildFourThreeScreen() {
 fun GrandChildFourFourScreen() {
     Text(text = "GrandChildFourFourScreen")
 }
+
+
 ///////////GRAND CHILDREN - END////////////
+/*
+    1-2
+    1-3-4
+    1-3-5
+ */
+@Composable
+fun ScreenOne(
+    onNavigateToScreenTwo: () -> Unit,
+    onNavigateToScreenThree: () -> Unit
+) {
+    Column {
+        Text(
+            modifier = Modifier.fillMaxWidth(),
+            text = "Screen one"
+        )
+        Button(
+            onClick = onNavigateToScreenTwo) {
+            Text(text = "Navigate to screen two")
+        }
+        Button(
+            onClick = onNavigateToScreenThree) {
+            Text(text = "Navigate to screen three")
+        }
+    }
+
+}
+@Composable
+fun ScreenTwo() {
+    Text(
+        modifier = Modifier.fillMaxWidth(),
+        text = "Screen two"
+    )
+}
+@Composable
+fun ScreenThree(
+    onNavigateToScreenFour: () -> Unit,
+    onNavigateToScreenFive: () -> Unit
+) {
+    Column {
+        Text(
+            modifier = Modifier.fillMaxWidth(),
+            text = "Screen three"
+        )
+        Button(
+            onClick = onNavigateToScreenFour) {
+            Text(text = "Navigate to screen four")
+        }
+        Button(
+            onClick = onNavigateToScreenFive) {
+            Text(text = "Navigate to screen five")
+        }
+    }
+}
+@Composable
+fun ScreenFour() {
+    Text(
+        modifier = Modifier.fillMaxWidth(),
+        text = "Screen four"
+    )
+}
+@Composable
+fun ScreenFive() {
+    Text(
+        modifier = Modifier.fillMaxWidth(),
+        text = "Screen five"
+    )
+}
+
+
+const val ROUTE_SCREEN_ONE = "ROUTE_SCREEN_ONE"
+const val ROUTE_SCREEN_TWO = "ROUTE_SCREEN_TWO"
+const val ROUTE_SCREEN_THREE = "ROUTE_SCREEN_THREE"
+const val ROUTE_SCREEN_FOUR = "ROUTE_SCREEN_FOUR"
+const val ROUTE_SCREEN_FIVE = "ROUTE_SCREEN_FIVE"

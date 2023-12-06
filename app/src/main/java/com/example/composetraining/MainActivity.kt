@@ -47,6 +47,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.rememberNavController
 import com.example.composetraining.models.Student
 import com.example.composetraining.stateholder.MyFirstHolderState
 import com.example.composetraining.ui.theme.ComposeTrainingTheme
@@ -76,6 +78,7 @@ fun App(
 ) {
     val uiItemState by mainViewModel.listFlow.collectAsStateWithLifecycle(initialValue = "Nothing collected")
     LazyColumn(modifier = modifier.fillMaxWidth()) {
+
         item {
             CounterScreen(
                 mainViewModel.counterLDState.observeAsState().value?:0,
@@ -102,6 +105,8 @@ fun App(
 
     }
 }
+
+
 
 /*
 MapSaver
