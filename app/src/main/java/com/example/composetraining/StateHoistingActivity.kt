@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -29,9 +27,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.composetraining.stateholder.HolderState
 import com.example.composetraining.stateholder.rememberHolderState
 import com.example.composetraining.ui.theme.ComposeTrainingTheme
@@ -255,19 +255,38 @@ fun MyAppNavHost(
                     - pass your composable a call to NavController.navigate().
 
      */
-    val onNavigateToScreenTwo   = { navController.navigate(ROUTE_SCREEN_TWO) }
+    val userId = "1234"
+    val onNavigateToScreenTwo   = { navController.navigate("$ROUTE_SCREEN_TWO/$userId?age=17") }
     val onNavigateToScreenThree = { navController.navigate(ROUTE_SCREEN_THREE) }
     val onNavigateToScreenFour  = { navController.navigate(ROUTE_SCREEN_FOUR) }
     val onNavigateToScreenFive  = { navController.navigate(ROUTE_SCREEN_FIVE) }
 
     val navGraphBuilder: NavGraphBuilder.() -> Unit = {
-        composable(ROUTE_SCREEN_ONE){
+        composable(
+            ROUTE_SCREEN_ONE,
+        ){
+
             ScreenOne(
                 onNavigateToScreenTwo,
                 onNavigateToScreenThree,
             )
         }
-        composable(ROUTE_SCREEN_TWO){ ScreenTwo() }
+        composable(
+            "$ROUTE_SCREEN_TWO/{userId}?age={age}",
+            arguments = listOf(
+                navArgument("userId") { type = NavType.StringType },
+                navArgument("age") {
+                    type = NavType.StringType
+                    defaultValue = "18"
+                }
+            )
+        ){
+                backStackEntry ->
+            ScreenTwo(
+                backStackEntry.arguments?.getString("userId"),
+                backStackEntry.arguments?.getString("age")
+            )
+        }
         composable(ROUTE_SCREEN_THREE){
             ScreenThree(
                 onNavigateToScreenFour,
@@ -630,7 +649,8 @@ fun GrandChildFourFourScreen() {
 @Composable
 fun ScreenOne(
     onNavigateToScreenTwo: () -> Unit,
-    onNavigateToScreenThree: () -> Unit
+    onNavigateToScreenThree: () -> Unit,
+
 ) {
     Column {
         Text(
@@ -649,10 +669,10 @@ fun ScreenOne(
 
 }
 @Composable
-fun ScreenTwo() {
+fun ScreenTwo(userId: String?, age: String?) {
     Text(
         modifier = Modifier.fillMaxWidth(),
-        text = "Screen two"
+        text = "Screen two with userId:$userId and age$age"
     )
 }
 @Composable
